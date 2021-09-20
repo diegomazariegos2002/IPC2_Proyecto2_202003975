@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Simulacion>
+	<Nombre>
+		Simulacion 1
+	</Nombre>
+	<ListadoProductos>
+		<Producto>
+			iWatch
+		</Producto>
+		<Producto>
+			Banda Galaxy Fit 2
+		</Producto>
+		<Producto>
+			Galaxy Note
+		</Producto>
+	</ListadoProductos>
+</Simulacion>

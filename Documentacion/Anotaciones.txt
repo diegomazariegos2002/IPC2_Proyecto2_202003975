@@ -1,0 +1,17 @@
+Matriz ortogonal 
+de "n" líneas de ensamblaje
+de "m" Componentes distintos
+ver imagen de brazo.
+Funcionamiento linea de ensamblaje
+1-2-3-4-5-6 seg. y así por componente
+
+en la cola de prioridad se puede
+usar el .split()
+osea lo L1pC1p L2pC2p L3C3p.
+
+IDEAS:
+Para verificar si una linea esta antes podría hacer
+un metodo de busca que si es true
+el ensamble se espera hasta el siguiente turno
+y cuando sea false osea que no existe una linea
+antes que el ahí que ensamble.
