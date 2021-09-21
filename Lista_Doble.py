@@ -23,3 +23,11 @@ class Lista_Doble:
                 return actual
             actual = actual.siguiente
         return None
+
+    def getProducto(self, nombreProducto):
+        actual = self.primero
+        while actual != None:
+            if actual.nombre == nombreProducto:
+                return actual
+            actual = actual.siguiente
+        return None

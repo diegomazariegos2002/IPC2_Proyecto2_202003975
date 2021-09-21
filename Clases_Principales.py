@@ -21,5 +21,12 @@ class Procedimiento(NodoLista):
 class Producto(NodoLista):
     def __init__(self, nombre, listaElaboracion):
         self.nombre = nombre
+        #Este atributo es una lista de la clase Procedimiento
         self.listaElaboracion = listaElaboracion
+        super().__init__()
+
+class ProductoSimulacion(NodoLista):
+    def __init__(self, nombreSimulacion, producto):
+        self.nombreSimulacion = nombreSimulacion
+        self.producto = producto
         super().__init__()

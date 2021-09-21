@@ -6,12 +6,13 @@ import xml.etree.ElementTree as ET
 import re
 #Librerias del proyecto
 from Lista_Doble import Lista_Doble
-from Clases_Principales import LineasProduccion, Procedimiento, Producto
+from Clases_Principales import LineasProduccion, Procedimiento, Producto, ProductoSimulacion
 
 
 #=======================================Variables globales========================================
 listaLineasProduccion = Lista_Doble()
 listaProductos = Lista_Doble()
+listaProductosSimulacion = Lista_Doble()
 
 #====================================Declarando función para extraer la dirección de un archivo========================================
 def extraerDireccionArchivo():
@@ -107,25 +108,32 @@ def cargar_Maquina(ruta):
                 #Creamos el nodo Producto y lo añadimos a su lista
                 producto = Producto(nombreProducto,listaProcedimiento)
                 listaProductos.setNodo(producto)
-    print("Llenado de datos de entrada con éxito")
+    print("Archivos de Maquina cargados con éxito")
                 
 def cargar_Simulacion(ruta):
+    global listaProductosSimulacion
+    global listaProductos
     tree = ET.parse(ruta)
     root = tree.getroot()
-
     #<Simulacion>
     for elemento in root:
         #<Nombre>
         for subElemento1 in elemento.iter('Nombre'):
             nombreSimulacion = subElemento1.text.strip()
             print(nombreSimulacion)
-
         #<ListadoProductos>
         for subElemento1 in elemento.iter('ListadoProductos'):
             #<Producto>
             for subElemento2 in subElemento1.iter('Producto'):
+                #buscando un producto mediante su nombre
                 nombreProducto = subElemento2.text.strip()
                 print(nombreProducto)
+                producto = listaProductos.getProducto(nombreProducto)
+                #generando el objeto del producto de la simulacion y añadiendolo a la lista
+                productoSimulacion = ProductoSimulacion(nombreProducto, producto)
+                listaProductosSimulacion.setNodo(productoSimulacion)
+    print("Archivo de simulacion cargado con éxito!!!")
+
 
 class VentanaMenu:
     def __init__(self):
@@ -157,12 +165,22 @@ class VentanaMenu:
         self.ventana.mainloop()
 
     def cargarMaquina(self):
+        global listaProductos
+        global listaLineasProduccion
+        global listaProductosSimulacion
+        listaLineasProduccion = Lista_Doble()
+        listaProductos = Lista_Doble()
+        listaProductosSimulacion = Lista_Doble()
         print("Cargando Maquina")
         cargar_Maquina(extraerDireccionArchivo())
 
     def cargarSimulacion(self):
-        print("Cargando Simulacion")
-        cargar_Simulacion(extraerDireccionArchivo())
+        global listaProductos
+        if listaProductos.primero == None:
+            print("No se ha cargado la maquina para hacer su simulación.")
+        else:
+            print("Cargando Simulacion")
+            cargar_Simulacion(extraerDireccionArchivo())
 
     def prueba(self):
         print("Hola")
