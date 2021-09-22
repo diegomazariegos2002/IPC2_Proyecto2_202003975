@@ -1,18 +1,22 @@
 #Libreria para interfaz grafica
-from tkinter import Tk, Menu, filedialog, messagebox, ttk
+from tkinter import Button, Tk, Menu, filedialog, messagebox, ttk, Label
 #Libreria para la lectura del xml
 import xml.etree.ElementTree as ET
 #Libreria para expresion regular
 import re
 #Librerias del proyecto
 from Lista_Doble import Lista_Doble
-from Clases_Principales import LineasProduccion, Procedimiento, Producto, ProductoSimulacion
+from Clases_Principales import LineasProduccion, Elaboracion, Producto, ProductoSimulacion, Accion
 
 
 #=======================================Variables globales========================================
+#Datos entrada
 listaLineasProduccion = Lista_Doble()
 listaProductos = Lista_Doble()
 listaProductosSimulacion = Lista_Doble()
+#Datos de operaciones
+listaAccionesSimulacion = Lista_Doble()
+
 
 #====================================Declarando función para extraer la dirección de un archivo========================================
 def extraerDireccionArchivo():
@@ -81,8 +85,8 @@ def cargar_Maquina(ruta):
                     nombreProducto = subElemento3.text.strip()
                     print(nombreProducto)
 
-                #Creamos una lista para los procedimientos
-                listaProcedimiento = Lista_Doble()
+                #Creamos una lista para los Elaboracions
+                listaElaboracion = Lista_Doble()
 
                 #<elaboracion>
                 for subElemento3 in subElemento2.iter('elaboracion'):
@@ -102,11 +106,11 @@ def cargar_Maquina(ruta):
                     cont = 0
                     while(cont < len(lineas)):
                         #Creamos los nodos de la lista y los añadimos
-                        nodoProcedimiento = Procedimiento(int(lineas[cont]), int(componentes[cont]))
-                        listaProcedimiento.setNodo(nodoProcedimiento)
+                        nodoElaboracion = Elaboracion(int(lineas[cont]), int(componentes[cont]))
+                        listaElaboracion.setNodo(nodoElaboracion)
                         cont+=1
                 #Creamos el nodo Producto y lo añadimos a su lista
-                producto = Producto(nombreProducto,listaProcedimiento)
+                producto = Producto(nombreProducto,listaElaboracion)
                 listaProductos.setNodo(producto)
     print("Archivos de Maquina cargados con éxito")
                 
@@ -134,6 +138,53 @@ def cargar_Simulacion(ruta):
                 listaProductosSimulacion.setNodo(productoSimulacion)
     print("Archivo de simulacion cargado con éxito!!!")
 
+#Metodo que se encarga de realizar la simulacion de forma individual osea por cada producto.
+def realizar_Simulacion(Nombreproducto):
+    global listaAccionesSimulacion
+    producto = listaProductos.getProducto(Nombreproducto)
+    tiempoSimulacion = 0
+    estadoEnsamblaje = False
+
+    #while que me permite recorrer mi listaElaboracion una y otra vez...
+    while(True):
+        tiempoSimulacion += 1
+        #verificamos si ya se cumplieron todas las elaboraciones
+        ultimo = producto.listaElaboracion.ultimo
+        if producto.listaElaboracion.verificarListaElaboracion(ultimo) == True:
+            break
+        else:
+            actual = producto.listaElaboracion.primero
+            while(actual != None):
+                print("Ciclo", tiempoSimulacion)
+                #Si no existe una elaboracion antes de la actual entonces la elaboracion actual
+                # es la primera en su linea en la cola de prioridades.
+                buscarAnterior = producto.listaElaboracion.getNodoElaboracionAntes(actual)
+                if buscarAnterior != None: # si, si existe un nodo en la misma linea antes
+                    if buscarAnterior.estado == False: #si no se ha completado el otro no hagas nada
+                        pass
+                    else:
+                        print("ejecuta tus metodos")
+                else:
+                    print("ejecuta tus metodos")
+                    busquedaSiguiente = producto.listaElaboracion.getNodoElaboracionDespues(actual)
+                    if actual.estado == True and busquedaSiguiente == None: #Si ya se completo la elaboracion no hace nada
+                        accion = Accion(actual.linea, "No hacer nada", tiempoSimulacion)
+                    elif actual.estado == True and busquedaSiguiente != None: #Si ya se completo pero si existe una instruccion antes no va a hacer nada
+                        pass
+                    else:
+                        if estadoEnsamblaje == False: #Para cuando todas las lineas de produccion tengan que seguir moviendose
+                            
+                            pass
+                        elif estadoEnsamblaje == True and actual.ensamblando == True: #este es el nodo que esta ensamblando
+                            pass
+                        else: #Para las lineas de produccion que no estan ensamblando
+                            accion = Accion(actual.linea, "No hacer nada", tiempoSimulacion)
+
+                #agregamos la accion resultante a la lista de acciones
+                # listaAccionesSimulacion.setNodo(accion)
+                actual = actual.siguiente
+        
+
 
 class VentanaMenu:
     def __init__(self):
@@ -160,9 +211,25 @@ class VentanaMenu:
         listadoNombreImagenes = []
         self.myComboBox = ttk.Combobox(self.ventana, state= "readonly", value = listadoNombreImagenes)
         self.myComboBox.bind("<<ComboboxSelected>>", self.comboClick)
-        self.myComboBox.place(x=10, y = 10)
+        self.myComboBox.place(x=200, y = 10)
+
+        #Labels
+        self.label1 = Label(self.ventana, text="Escoga un producto ")
+        self.label1.place(x=10, y = 10)
+
+        #Buttons
+        self.btnProcesar = Button(self.ventana, text="Procesar", command=self.procesar)
+        self.btnProcesar.place(x=400, y = 10)
 
         self.ventana.mainloop()
+
+    #Metodo para procesar individualmente cada producto y mostrarlo en la interfaz
+    def procesar(self):
+        nombreProducto = self.myComboBox.get()
+        if nombreProducto != "":
+            realizar_Simulacion(nombreProducto)
+        else:
+            print("El producto seleccionado no existe")
 
     def cargarMaquina(self):
         global listaProductos
@@ -171,23 +238,38 @@ class VentanaMenu:
         listaLineasProduccion = Lista_Doble()
         listaProductos = Lista_Doble()
         listaProductosSimulacion = Lista_Doble()
-        print("Cargando Maquina")
-        cargar_Maquina(extraerDireccionArchivo())
-
+        direccion = extraerDireccionArchivo()
+        if direccion == None:
+            pass
+        else:
+            print("Cargando Maquina")
+            cargar_Maquina(direccion)
+            listadoNombreProductos = listaProductos.listaNombreProductos()
+            #añado la lista de nombres al ComboBox
+            self.myComboBox["value"] = listadoNombreProductos
+            #Le digo que muestre el ComboBox con el primer elemento
+            self.myComboBox.current(0) 
+            
     def cargarSimulacion(self):
         global listaProductos
+        global listaProductosSimulacion
+        listaProductosSimulacion = Lista_Doble()
         if listaProductos.primero == None:
             print("No se ha cargado la maquina para hacer su simulación.")
         else:
-            print("Cargando Simulacion")
-            cargar_Simulacion(extraerDireccionArchivo())
+            direccion = extraerDireccionArchivo()
+            if direccion == None:
+                pass
+            else:
+                print("Cargando Simulacion")
+                cargar_Simulacion(direccion)
 
     def prueba(self):
         print("Hola")
 
     #se manda a llamar cuando se selecciona un item del combo.
     def comboClick(self, event):
-        self.mostrarOriginal()
+        pass
 
     # Metodo para cerrar la ventana 
     def on_closing(self):
