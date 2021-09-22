@@ -45,6 +45,9 @@ class Accion(NodoLista):
         self.mov = mov
         self.tmp_Accion = tmp_Accion
         super().__init__()
+    
+    def __str__(self):
+        return f"(linea = {str(self.linea)} ,mov = {str(self.mov)}, tmp_Accion = {str(self.tmp_Accion)},)"
 
 class Simulacion(NodoLista):
     def __init__(self, nombreSimulacion, nombreProducto,listaAcciones):

@@ -1,5 +1,6 @@
 #Libreria para interfaz grafica
 from tkinter import Button, Tk, Menu, filedialog, messagebox, ttk, Label
+from tkinter.constants import TRUE
 #Libreria para la lectura del xml
 import xml.etree.ElementTree as ET
 #Libreria para expresion regular
@@ -155,7 +156,7 @@ def realizar_Simulacion(Nombreproducto):
         else:
             actual = producto.listaElaboracion.primero
             while(actual != None):
-                print("Ciclo", tiempoSimulacion)
+                print("Segundo:", tiempoSimulacion)
                 #Si no existe una elaboracion antes de la actual entonces la elaboracion actual
                 # es la primera en su linea en la cola de prioridades.
                 buscarAnterior = producto.listaElaboracion.getNodoElaboracionAntes(actual)
@@ -164,6 +165,67 @@ def realizar_Simulacion(Nombreproducto):
                         pass
                     else:
                         print("ejecuta tus metodos")
+                        busquedaSiguiente = producto.listaElaboracion.getNodoElaboracionDespues(actual)
+                        if actual.estado == True and busquedaSiguiente == None: #Si ya se completo la elaboracion no hace nada
+                            accion = Accion(actual.linea, "No hacer nada", tiempoSimulacion)
+                        elif actual.estado == True and busquedaSiguiente != None: #Si ya se completo pero si existe una instruccion antes no va a hacer nada
+                            pass
+                        else:
+                            if estadoEnsamblaje == False: #Para cuando todas las lineas de produccion tengan que seguir moviendose
+                                lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
+                                
+                                #Verificar si ya ha llegado al componente destino
+                                if int(lineaProduccion.contadorComponente) == int(actual.componente):
+                                    #Verificar si la instruccion anterior ya ha sido completada
+                                    if actual.anterior == None or actual.anterior.estado == True:
+                                        estadoEnsamblaje = True
+                                        actual.ensamblando = True
+                                        #Funcion de ensamblaje
+                                        lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
+                                        #Si tiene que ir sumando
+                                        if int(lineaProduccion.cont_tmp_Ensamblaje) == int(lineaProduccion.tmp_Ensamblaje):
+                                            accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
+                                            estadoEnsamblaje = False
+                                            actual.ensamblando = False
+                                            actual.estado = True
+                                            lineaProduccion.cont_tmp_Ensamblaje = 0
+
+                                        elif int(lineaProduccion.cont_tmp_Ensamblaje) < int(lineaProduccion.tmp_Ensamblaje):
+                                            accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
+                                            lineaProduccion.cont_tmp_Ensamblaje += 1
+                                            
+
+                                    else:#Si no ha sido completada se tiene que esperar a que se complete y por ende no se hace nada
+                                        accion = Accion(actual.linea, "No hacer nada", tiempoSimulacion)
+
+                                #Si tiene que ir sumando
+                                elif int(lineaProduccion.contadorComponente) < int(actual.componente):
+                                    lineaProduccion.contadorComponente += 1
+                                    accion = Accion(actual.linea, str(lineaProduccion.contadorComponente), tiempoSimulacion)
+                                    #Verificar si ya ha llegado al componente destino
+                                    
+                                #Si tiene que ir restando
+                                elif int(lineaProduccion.contadorComponente) > int(actual.componente):
+                                    lineaProduccion.contadorComponente -= 1
+                                    accion = Accion(actual.linea, str(lineaProduccion.contadorComponente), tiempoSimulacion)
+
+                            elif estadoEnsamblaje == True and actual.ensamblando == True: #este es el nodo que esta ensamblando
+                                lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
+                                #Si tiene que ir sumando
+                                if int(lineaProduccion.cont_tmp_Ensamblaje) == int(lineaProduccion.tmp_Ensamblaje):
+                                    accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
+                                    estadoEnsamblaje = False
+                                    actual.ensamblando = False
+                                    actual.estado = True
+                                    lineaProduccion.cont_tmp_Ensamblaje = 0
+
+                                elif int(lineaProduccion.cont_tmp_Ensamblaje) < int(lineaProduccion.tmp_Ensamblaje):
+                                    accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
+                                    lineaProduccion.cont_tmp_Ensamblaje += 1
+                                
+                            else: #Para las lineas de produccion que no estan ensamblando
+                                accion = Accion(actual.linea, "No hacer nada", tiempoSimulacion)
+
                 else:
                     print("ejecuta tus metodos")
                     busquedaSiguiente = producto.listaElaboracion.getNodoElaboracionDespues(actual)
@@ -173,16 +235,68 @@ def realizar_Simulacion(Nombreproducto):
                         pass
                     else:
                         if estadoEnsamblaje == False: #Para cuando todas las lineas de produccion tengan que seguir moviendose
+                            lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
                             
-                            pass
+                            #Verificar si ya ha llegado al componente destino
+                            if int(lineaProduccion.contadorComponente) == int(actual.componente):
+                                #Verificar si la instruccion anterior ya ha sido completada
+                                if actual.anterior == None or actual.anterior.estado == True:
+                                    estadoEnsamblaje = True
+                                    actual.ensamblando = True
+                                    #Funcion de ensamblaje
+                                    lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
+                                    #Si tiene que ir sumando
+                                    if int(lineaProduccion.cont_tmp_Ensamblaje) == int(lineaProduccion.tmp_Ensamblaje):
+                                        accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
+                                        estadoEnsamblaje = False
+                                        actual.ensamblando = False
+                                        actual.estado = True
+                                        lineaProduccion.cont_tmp_Ensamblaje = 0
+
+                                    elif int(lineaProduccion.cont_tmp_Ensamblaje) < int(lineaProduccion.tmp_Ensamblaje):
+                                        accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
+                                        lineaProduccion.cont_tmp_Ensamblaje += 1
+
+                                else:#Si no ha sido completada se tiene que esperar a que se complete y por ende no se hace nada
+                                    accion = Accion(actual.linea, "No hacer nada", tiempoSimulacion)
+
+                            #Si tiene que ir sumando
+                            elif int(lineaProduccion.contadorComponente) < int(actual.componente):
+                                lineaProduccion.contadorComponente += 1
+                                accion = Accion(actual.linea, str(lineaProduccion.contadorComponente), tiempoSimulacion)
+
+                            #Si tiene que ir restando
+                            elif int(lineaProduccion.contadorComponente) > int(actual.componente):
+                                lineaProduccion.contadorComponente -= 1
+                                accion = Accion(actual.linea, str(lineaProduccion.contadorComponente), tiempoSimulacion)
+
+                            
+
                         elif estadoEnsamblaje == True and actual.ensamblando == True: #este es el nodo que esta ensamblando
-                            pass
+                            lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
+                            #Si tiene que ir sumando
+                            if int(lineaProduccion.cont_tmp_Ensamblaje) == int(lineaProduccion.tmp_Ensamblaje):
+                                accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
+                                estadoEnsamblaje = False
+                                actual.ensamblando = False
+                                actual.estado = True
+                                lineaProduccion.cont_tmp_Ensamblaje = 0
+
+                            elif int(lineaProduccion.cont_tmp_Ensamblaje) < int(lineaProduccion.tmp_Ensamblaje):
+                                accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
+                                lineaProduccion.cont_tmp_Ensamblaje += 1
+
+                            
                         else: #Para las lineas de produccion que no estan ensamblando
                             accion = Accion(actual.linea, "No hacer nada", tiempoSimulacion)
 
                 #agregamos la accion resultante a la lista de acciones
-                # listaAccionesSimulacion.setNodo(accion)
+                if accion != None:
+                    print(str(accion))
+                    listaAccionesSimulacion.setNodo(accion)
+                accion = None
                 actual = actual.siguiente
+    print("funciono")
         
 
 

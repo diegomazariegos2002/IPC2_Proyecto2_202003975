@@ -102,5 +102,3 @@ class Lista_Doble:
                 return actual
             actual = actual.siguiente
         return None
-
-    
