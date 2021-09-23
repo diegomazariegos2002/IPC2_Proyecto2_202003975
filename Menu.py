@@ -142,21 +142,25 @@ def cargar_Simulacion(ruta):
 #Metodo que se encarga de realizar la simulacion de forma individual osea por cada producto.
 def realizar_Simulacion(Nombreproducto):
     global listaAccionesSimulacion
+    global listaProductos
+    global listaLineasProduccion
     producto = listaProductos.getProducto(Nombreproducto)
     tiempoSimulacion = 0
     estadoEnsamblaje = False
+    estadoEnsambleUltimo = False
+
 
     #while que me permite recorrer mi listaElaboracion una y otra vez...
     while(True):
-        tiempoSimulacion += 1
         #verificamos si ya se cumplieron todas las elaboraciones
         ultimo = producto.listaElaboracion.ultimo
         if producto.listaElaboracion.verificarListaElaboracion(ultimo) == True:
             break
         else:
+            tiempoSimulacion += 1
+            print("Segundo:", tiempoSimulacion)
             actual = producto.listaElaboracion.primero
             while(actual != None):
-                print("Segundo:", tiempoSimulacion)
                 #Si no existe una elaboracion antes de la actual entonces la elaboracion actual
                 # es la primera en su linea en la cola de prioridades.
                 buscarAnterior = producto.listaElaboracion.getNodoElaboracionAntes(actual)
@@ -164,14 +168,13 @@ def realizar_Simulacion(Nombreproducto):
                     if buscarAnterior.estado == False: #si no se ha completado el otro no hagas nada
                         pass
                     else:
-                        print("ejecuta tus metodos")
                         busquedaSiguiente = producto.listaElaboracion.getNodoElaboracionDespues(actual)
                         if actual.estado == True and busquedaSiguiente == None: #Si ya se completo la elaboracion no hace nada
                             accion = Accion(actual.linea, "No hacer nada", tiempoSimulacion)
                         elif actual.estado == True and busquedaSiguiente != None: #Si ya se completo pero si existe una instruccion antes no va a hacer nada
                             pass
                         else:
-                            if estadoEnsamblaje == False: #Para cuando todas las lineas de produccion tengan que seguir moviendose
+                            if estadoEnsamblaje == False and estadoEnsambleUltimo == False: #Para cuando todas las lineas de produccion tengan que seguir moviendose
                                 lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
                                 
                                 #Verificar si ya ha llegado al componente destino
@@ -188,7 +191,9 @@ def realizar_Simulacion(Nombreproducto):
                                             estadoEnsamblaje = False
                                             actual.ensamblando = False
                                             actual.estado = True
-                                            lineaProduccion.cont_tmp_Ensamblaje = 0
+                                            lineaProduccion.cont_tmp_Ensamblaje = 1
+                                            estadoEnsambleUltimo = True
+
 
                                         elif int(lineaProduccion.cont_tmp_Ensamblaje) < int(lineaProduccion.tmp_Ensamblaje):
                                             accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
@@ -217,7 +222,8 @@ def realizar_Simulacion(Nombreproducto):
                                     estadoEnsamblaje = False
                                     actual.ensamblando = False
                                     actual.estado = True
-                                    lineaProduccion.cont_tmp_Ensamblaje = 0
+                                    lineaProduccion.cont_tmp_Ensamblaje = 1
+                                    estadoEnsambleUltimo = True
 
                                 elif int(lineaProduccion.cont_tmp_Ensamblaje) < int(lineaProduccion.tmp_Ensamblaje):
                                     accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
@@ -225,16 +231,14 @@ def realizar_Simulacion(Nombreproducto):
                                 
                             else: #Para las lineas de produccion que no estan ensamblando
                                 accion = Accion(actual.linea, "No hacer nada", tiempoSimulacion)
-
                 else:
-                    print("ejecuta tus metodos")
                     busquedaSiguiente = producto.listaElaboracion.getNodoElaboracionDespues(actual)
                     if actual.estado == True and busquedaSiguiente == None: #Si ya se completo la elaboracion no hace nada
                         accion = Accion(actual.linea, "No hacer nada", tiempoSimulacion)
                     elif actual.estado == True and busquedaSiguiente != None: #Si ya se completo pero si existe una instruccion antes no va a hacer nada
                         pass
                     else:
-                        if estadoEnsamblaje == False: #Para cuando todas las lineas de produccion tengan que seguir moviendose
+                        if estadoEnsamblaje == False and estadoEnsambleUltimo == False: #Para cuando todas las lineas de produccion tengan que seguir moviendose
                             lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
                             
                             #Verificar si ya ha llegado al componente destino
@@ -251,7 +255,8 @@ def realizar_Simulacion(Nombreproducto):
                                         estadoEnsamblaje = False
                                         actual.ensamblando = False
                                         actual.estado = True
-                                        lineaProduccion.cont_tmp_Ensamblaje = 0
+                                        lineaProduccion.cont_tmp_Ensamblaje = 1
+                                        estadoEnsambleUltimo = True
 
                                     elif int(lineaProduccion.cont_tmp_Ensamblaje) < int(lineaProduccion.tmp_Ensamblaje):
                                         accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
@@ -270,8 +275,6 @@ def realizar_Simulacion(Nombreproducto):
                                 lineaProduccion.contadorComponente -= 1
                                 accion = Accion(actual.linea, str(lineaProduccion.contadorComponente), tiempoSimulacion)
 
-                            
-
                         elif estadoEnsamblaje == True and actual.ensamblando == True: #este es el nodo que esta ensamblando
                             lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
                             #Si tiene que ir sumando
@@ -280,7 +283,8 @@ def realizar_Simulacion(Nombreproducto):
                                 estadoEnsamblaje = False
                                 actual.ensamblando = False
                                 actual.estado = True
-                                lineaProduccion.cont_tmp_Ensamblaje = 0
+                                lineaProduccion.cont_tmp_Ensamblaje = 1
+                                estadoEnsambleUltimo = True
 
                             elif int(lineaProduccion.cont_tmp_Ensamblaje) < int(lineaProduccion.tmp_Ensamblaje):
                                 accion = Accion(actual.linea, f"Ensamblar - componente {str(actual.componente)}", tiempoSimulacion)
@@ -295,7 +299,12 @@ def realizar_Simulacion(Nombreproducto):
                     print(str(accion))
                     listaAccionesSimulacion.setNodo(accion)
                 accion = None
+
                 actual = actual.siguiente
+        estadoEnsambleUltimo = False
+    
+    producto.listaElaboracion.resetearEstadosNodoListaElaboracion()
+    listaLineasProduccion.resetearEstadosNodoListaLineaProduccion()
     print("funciono")
         
 

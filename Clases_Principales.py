@@ -11,7 +11,7 @@ class LineasProduccion(NodoLista):
         self.cant_Componentes = cant_Componentes
         self.tmp_Ensamblaje = tmp_Ensamblaje
         self.contadorComponente = 0
-        self.cont_tmp_Ensamblaje = 0
+        self.cont_tmp_Ensamblaje = 1
         super().__init__()
 
 #Procedimiento o Elaboraciones que se hacen para fabricar el producto
@@ -47,7 +47,7 @@ class Accion(NodoLista):
         super().__init__()
     
     def __str__(self):
-        return f"(linea = {str(self.linea)} ,mov = {str(self.mov)}, tmp_Accion = {str(self.tmp_Accion)},)"
+        return f"(linea = {str(self.linea)} ,mov = {str(self.mov)}, tmp_Accion = {str(self.tmp_Accion)})"
 
 class Simulacion(NodoLista):
     def __init__(self, nombreSimulacion, nombreProducto,listaAcciones):

@@ -102,3 +102,16 @@ class Lista_Doble:
                 return actual
             actual = actual.siguiente
         return None
+
+    def resetearEstadosNodoListaElaboracion(self):
+        actual = self.primero
+        while actual != None:
+            actual.estado = False
+            actual = actual.siguiente
+
+    def resetearEstadosNodoListaLineaProduccion(self):
+        actual = self.primero
+        while actual != None:
+            actual.contadorComponente = 0
+            actual.cont_tmp_Ensamblaje = 1
+            actual = actual.siguiente
