@@ -139,7 +139,7 @@ def cargar_Simulacion(ruta):
                 listaProductosSimulacion.setNodo(productoSimulacion)
     print("Archivo de simulacion cargado con éxito!!!")
 
-#Metodo que se encarga de realizar la simulacion de forma individual osea por cada producto.
+#Metodos que se encargan de realizar la simulacion de forma individual osea por cada producto mediante su nombre.
 def realizar_Simulacion(Nombreproducto):
     global listaAccionesSimulacion
     global listaProductos
@@ -206,13 +206,13 @@ def realizar_Simulacion(Nombreproducto):
                                 #Si tiene que ir sumando
                                 elif int(lineaProduccion.contadorComponente) < int(actual.componente):
                                     lineaProduccion.contadorComponente += 1
-                                    accion = Accion(actual.linea, str(lineaProduccion.contadorComponente), tiempoSimulacion)
+                                    accion = Accion(actual.linea, f"Mover brazo a componente {str(lineaProduccion.contadorComponente)}", tiempoSimulacion)
                                     #Verificar si ya ha llegado al componente destino
                                     
                                 #Si tiene que ir restando
                                 elif int(lineaProduccion.contadorComponente) > int(actual.componente):
                                     lineaProduccion.contadorComponente -= 1
-                                    accion = Accion(actual.linea, str(lineaProduccion.contadorComponente), tiempoSimulacion)
+                                    accion = Accion(actual.linea, f"Mover brazo a componente {str(lineaProduccion.contadorComponente)}", tiempoSimulacion)
 
                             elif estadoEnsamblaje == True and actual.ensamblando == True: #este es el nodo que esta ensamblando
                                 lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
@@ -268,12 +268,12 @@ def realizar_Simulacion(Nombreproducto):
                             #Si tiene que ir sumando
                             elif int(lineaProduccion.contadorComponente) < int(actual.componente):
                                 lineaProduccion.contadorComponente += 1
-                                accion = Accion(actual.linea, str(lineaProduccion.contadorComponente), tiempoSimulacion)
+                                accion = Accion(actual.linea, f"Mover brazo a componente {str(lineaProduccion.contadorComponente)}", tiempoSimulacion)
 
                             #Si tiene que ir restando
                             elif int(lineaProduccion.contadorComponente) > int(actual.componente):
                                 lineaProduccion.contadorComponente -= 1
-                                accion = Accion(actual.linea, str(lineaProduccion.contadorComponente), tiempoSimulacion)
+                                accion = Accion(actual.linea, f"Mover brazo a componente {str(lineaProduccion.contadorComponente)}", tiempoSimulacion)
 
                         elif estadoEnsamblaje == True and actual.ensamblando == True: #este es el nodo que esta ensamblando
                             lineaProduccion = listaLineasProduccion.getLineaProduccion(actual.linea)
@@ -305,9 +305,13 @@ def realizar_Simulacion(Nombreproducto):
     
     producto.listaElaboracion.resetearEstadosNodoListaElaboracion()
     listaLineasProduccion.resetearEstadosNodoListaLineaProduccion()
+    producto.listaAccionesProducto = listaAccionesSimulacion
+    listaAccionesSimulacion = Lista_Doble()
     print("funciono")
-        
 
+def escribirArchivoXml(rutaSalida, NombreProducto):
+    root = ET.Element("SalidaSimulacion")
+    pass
 
 class VentanaMenu:
     def __init__(self):
