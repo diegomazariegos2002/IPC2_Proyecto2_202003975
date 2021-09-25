@@ -1,23 +1,29 @@
 #Libreria para interfaz grafica
-from tkinter import Button, Tk, Menu, filedialog, messagebox, ttk, Label
+from tkinter import Button, Tk, Menu, filedialog, messagebox, ttk, Label, Scrollbar, scrolledtext, Frame
+import tkinter
 from tkinter.constants import TRUE
 #Libreria para la lectura del xml
 import xml.etree.ElementTree as ET
 #Libreria para expresion regular
 import re
+
+from graphviz.dot import Graph
 #Librerias del proyecto
 from Lista_Doble import Lista_Doble
-from Clases_Principales import LineasProduccion, Elaboracion, Producto, ProductoSimulacion, Accion
-
+from Clases_Principales import LineasProduccion, Elaboracion, Producto, ProductoSimulacion, Accion, Simulacion
+#Libreria para obtener la direccion del ejecutable
+import pathlib
+import webbrowser
+#Librería para utilizar la herramienta graphviz
+from graphviz import Digraph
 
 #=======================================Variables globales========================================
 #Datos entrada
 listaLineasProduccion = Lista_Doble()
 listaProductos = Lista_Doble()
-listaProductosSimulacion = Lista_Doble()
 #Datos de operaciones
 listaAccionesSimulacion = Lista_Doble()
-
+simulacionActual = Simulacion()
 
 #====================================Declarando función para extraer la dirección de un archivo========================================
 def extraerDireccionArchivo():
@@ -39,7 +45,7 @@ def extraerDireccionArchivo():
         print('Lectura exitosa\n')
         return texto
 
-#====================================Metodo para cargar el archivo XML de Maquina y Simulacion====================================
+#====================================Metodos para cargar el archivo XML de Maquina y Simulacion====================================
 def cargar_Maquina(ruta):
     global listaLineasProduccion
     global listaProductos
@@ -116,8 +122,8 @@ def cargar_Maquina(ruta):
     print("Archivos de Maquina cargados con éxito")
                 
 def cargar_Simulacion(ruta):
-    global listaProductosSimulacion
     global listaProductos
+    global simulacionActual
     tree = ET.parse(ruta)
     root = tree.getroot()
     #<Simulacion>
@@ -126,6 +132,8 @@ def cargar_Simulacion(ruta):
         for subElemento1 in elemento.iter('Nombre'):
             nombreSimulacion = subElemento1.text.strip()
             print(nombreSimulacion)
+            listaProductosSimulacion = Lista_Doble()
+            simulacionActual = Simulacion(str(nombreSimulacion), listaProductosSimulacion) #inicializando la simulacion actual por eso le mandamos una lista vacía
         #<ListadoProductos>
         for subElemento1 in elemento.iter('ListadoProductos'):
             #<Producto>
@@ -134,16 +142,21 @@ def cargar_Simulacion(ruta):
                 nombreProducto = subElemento2.text.strip()
                 print(nombreProducto)
                 producto = listaProductos.getProducto(nombreProducto)
-                #generando el objeto del producto de la simulacion y añadiendolo a la lista
-                productoSimulacion = ProductoSimulacion(nombreProducto, producto)
-                listaProductosSimulacion.setNodo(productoSimulacion)
+                productoAuxiliar = ProductoSimulacion(producto.nombre, producto.listaElaboracion, producto.listaAccionesProducto)#Este producto auxiliar lo genero para no tocar directamente el producto que tengo en la listaProductos
+                simulacionActual.listaProductos.setNodo(productoAuxiliar) #Al objeto simulacionActual le añado un producto mas a su lista de productos
     print("Archivo de simulacion cargado con éxito!!!")
+    actual = simulacionActual.listaProductos.primero
+    while(actual != None):
+        realizar_Simulacion(actual.nombre)
+        actual = actual.siguiente
+    escribirArchivoXml()
 
 #Metodos que se encargan de realizar la simulacion de forma individual osea por cada producto mediante su nombre.
 def realizar_Simulacion(Nombreproducto):
     global listaAccionesSimulacion
-    global listaProductos
     global listaLineasProduccion
+    global listaProductos
+    global simulacionActual
     producto = listaProductos.getProducto(Nombreproducto)
     tiempoSimulacion = 0
     estadoEnsamblaje = False
@@ -303,23 +316,202 @@ def realizar_Simulacion(Nombreproducto):
                 actual = actual.siguiente
         estadoEnsambleUltimo = False
     
-    producto.listaElaboracion.resetearEstadosNodoListaElaboracion()
-    listaLineasProduccion.resetearEstadosNodoListaLineaProduccion()
-    producto.listaAccionesProducto = listaAccionesSimulacion
-    listaAccionesSimulacion = Lista_Doble()
+    producto.listaElaboracion.resetearEstadosNodoListaElaboracion() #Resetear los estados la lista de elaboraciones del producto porque todos estan TRUE al finalizar el metodo
+    listaLineasProduccion.resetearEstadosNodoListaLineaProduccion() #Resetear los estados de las lineas de produccion
+    producto.listaAccionesProducto = listaAccionesSimulacion # Guardar la lista de acciones en la simulacion en las acciones de cada producto
+    listaAccionesSimulacion = Lista_Doble() # Reiniciar la lista de acciones de Simulaciones general para poder realizar otras simulaciones a futuro.
+    
+    #Verificar si se trata de una simulacion individual o una en conjunto
+    if simulacionActual.nombreSimulacion == "Simulacion_Individual":
+        productoAuxiliar = ProductoSimulacion(producto.nombre, producto.listaElaboracion, producto.listaAccionesProducto)#Este producto auxiliar lo genero para no tocar directamente el producto que tengo en la listaProductos
+        simulacionActual.listaProductos.setNodo(productoAuxiliar) #Al objeto simulacionActual le añado un producto mas a su lista de productos
+    else:
+        simulacionActual.listaProductos.getProducto(producto.nombre).listaAccionesProducto = producto.listaAccionesProducto
+
+
     print("funciono")
 
-def escribirArchivoXml(rutaSalida, NombreProducto):
+def escribirArchivoXml():
+    global simulacionActual
+    #<SalidaSimulacion>
     root = ET.Element("SalidaSimulacion")
-    pass
+    #<Nombre>
+    ET.SubElement(root, "Nombre").text = f"{str(simulacionActual.nombreSimulacion)}"
+    #<ListadoProductos>
+    listadoProductos = ET.SubElement(root, "ListadoProductos")
+    actual = simulacionActual.listaProductos.primero
+    while(actual != None):
+        #<Producto>
+        producto = ET.SubElement(listadoProductos, "Producto")
+        #<Nombre>
+        ET.SubElement(producto, "Nombre").text = f"{str(actual.nombre)}"
+        #<TiempoTotal>
+        ET.SubElement(producto, "TiempoTotal").text = f"{str(actual.listaAccionesProducto.ultimo.tmp_Accion)}"
+        #<ElaboracionOptima>
+        elaboracionOptima = ET.SubElement(producto, "ElaboracionOptima")
+
+        actual2 = actual.listaAccionesProducto.primero
+        while(actual2 != None):
+            #<Tiempo>
+            tiempoElaboracion = ET.SubElement(elaboracionOptima, "Tiempo", NoSegundo = f"[{str(actual2.tmp_Accion)}]")
+            #<LineaEnsamblaje>
+            lineaEnsamblaje = ET.SubElement(tiempoElaboracion, "LineaEnsamblaje", NoLinea = f"[{str(actual2.linea)}]").text = f"{str(actual2.mov)}" 
+            actual2 = actual2.siguiente
+        actual = actual.siguiente
+    
+    arbol = ET.ElementTree(root)
+    arbol.write(f"{pathlib.Path(__file__).parent.absolute()}/{str(simulacionActual.nombreSimulacion)}.xml")
+    print("Archivo de salida xml creado con exito.")
+
+#===================================Metodo para Generar reporte HTML============================================
+def generarReporteHtml():
+    global simulacionActual
+    if simulacionActual.listaProductos != None:
+        actual = simulacionActual.listaProductos.primero
+        while(actual != None):
+            #abrir o crear el reporte
+            f = open(f'{actual.nombre}.html','w', encoding='utf-8')
+            cuerpo = f'''<!doctype html>
+                <html lang="en">
+
+                <head>
+                <!-- Required meta tags -->
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+
+                <!-- Bootstrap CSS -->
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+                    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+                <title>REPORTE DE PRODUCTO</title>
+                </head>
+
+                <body style="background-color: lightseagreen;">
+                <div class="container-fluid container p-3 my-3 bg-dark text-white">
+                    <div class="row">
+                    <div class="col-12" style="text-align: center; ">
+                        <h1>REPORTE DE PRODUCTO</h1>
+                    </div>
+                    </div>
+                </div>
+                <div class="container-fluid" style="background-color: rgb(255, 255, 255); ">
+                    <div class="row justify-content-md-center">
+                    <div>
+                        <h3>Nombre del producto: {actual.nombre}</h3>
+                    </div>
+                    </div>
+                    <div class="row justify-content-md-center">
+                    <div>
+                        <h3>El producto {actual.nombre} se puede elaborar optimamente en {actual.listaAccionesProducto.ultimo.tmp_Accion}</h3>
+                    </div>
+                    </div>
+                    <div class="row justify-content-md-center">
+                    <div class="col-md-auto">
+                        <h2 style="text-decoration: underline tomato;">Listado de procedimientos</h2>
+                    </div>
+                    </div>
+                    <div class="row justify-content-md-center">
+                    <div class="col-md-auto">
+                        <table class="table table-bordered table-striped text-center table-hover table-responsive"
+                        style="text-align: center; width: 600px;">
+                        <thead>
+                            <tr class="table-dark">
+                            <th>Segundo</th>
+                            <th>Movimiento</th>
+                            <th>Linea</th>
+                            
+                            </tr>
+                        </thead>
+                        <tbody>
+                            '''
+            actual2 = actual.listaAccionesProducto.primero
+            while(actual2 != None):
+                cuerpo +=  f'''
+                            <tr>
+                            <td class="table-info">{actual2.tmp_Accion}</td>
+                            <td class="table-success">{actual2.mov}</td>
+                            <td class="table-success">{actual2.linea}</td>
+                            </tr>'''
+                
+                actual2 = actual2.siguiente
+            
+            cuerpo += '''
+                        </tbody>
+                        </table>
+                    </div>
+                    </div>
+                    </div>
+                <div class="container-fluid container p-3 my-3 bg-dark text-white">
+                    <div class="row">
+                    <div class="col-12" style="text-align: center; ">
+                        <h1></h1>
+                    </div>
+                    </div>
+                </div>
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+                    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+                    crossorigin="anonymous"></script>
+                </body>
+
+                </html>'''
+            
+
+            f.write(cuerpo)
+            f.close
+            webbrowser.open_new_tab(f'{actual.nombre}.html')
+            
+            actual = actual.siguiente
+    else:
+        messagebox.showwarning('ADVERTENCIA', 'No se selecciono ningun archivo.')
+
+#==================Metodo para generar reporte Graphviz de la lista de elaboración de cada producto=======================================
+def generarReporteGraphviz(nombreProducto):
+    global listaProductos
+
+    producto = listaProductos.getProducto(nombreProducto)
+    if producto != None:
+        #Aquí creamos el objeto Digraph en donde le dicimos que su formato de salida sera de png
+        dot = Digraph(comment='The Round Table')
+        
+        dot.attr('node', shape = "underline")
+        dot.node('titulo', label= f'{producto.nombre}')
+        dot.attr('node', shape = "rectangle")
+        actual2 = producto.listaElaboracion.primero
+        while(actual2 != None):
+            #Creando los nodos donde antes de la "," hace referencia al id del nodo y después de la "," al valor del label osea
+            #el valor que aparece impreso en el nodo.
+            dot.node(f'{str(actual2)}',f'L{str(actual2.linea)}C{str(actual2.componente)}')
+            
+            if actual2.siguiente != None:
+                #Creando las uniones entre los nodos
+                dot.edge(f'{str(actual2)}', f'{str(actual2.siguiente)}',constraint = 'false')
+
+            actual2 = actual2.siguiente
+        
+        #aquí creamos los archivos tanto el .DOT como el .Output que en este caso le dijimos sería de formato png.
+        dot.render(f'Lista_Cola_{producto.nombre}', view = True)
+            
+    else:
+        messagebox.showwarning('ADVERTENCIA', 'No se puede generar un reporte de cola ya que no existe el producto solicitado.')
+    
 
 class VentanaMenu:
     def __init__(self):
         self.txt = None
         self.ventana = Tk()
         self.ventana.title("Menu")
-        self.ventana.geometry("800x500")
-        self.ventana.configure(bg = 'white')
+        #Posicionar ventana en el centro
+        self.ancho_ventana = 800
+        self.alto_ventana = 500
+
+        self.x_ventana = self.ventana.winfo_screenwidth() // 2 - self.ancho_ventana // 2
+        self.y_ventana = self.ventana.winfo_screenheight() // 2 - self.alto_ventana // 2
+
+        self.posicion = str(self.ancho_ventana) + "x" + str(self.alto_ventana) + "+" + str(self.x_ventana) + "+" + str(self.y_ventana)
+        self.ventana.geometry(self.posicion)
+
+        self.ventana.configure(bg = 'turquoise')
+        self.ventana.resizable(False, False)
 
         # Por medio de esto accedo a lo que sucede al dar click sobre la X para cerrar la ventana
         self.ventana.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -331,7 +523,7 @@ class VentanaMenu:
         #Creando una sección/SubMenú esta es la barrita que aparecere arriba en la ventana
         self.miMenu.add_command(label="Cargar maquina", command=self.cargarMaquina)
         self.miMenu.add_command(label="Cargar simulación", command=self.cargarSimulacion)
-        self.miMenu.add_command(label="Reportes", command=self.prueba)
+        self.miMenu.add_command(label="Reportes", command=self.reporte)
         self.miMenu.add_command(label="Salir", command=self.on_closing)
 
         #ComboBox
@@ -341,30 +533,58 @@ class VentanaMenu:
         self.myComboBox.place(x=200, y = 10)
 
         #Labels
-        self.label1 = Label(self.ventana, text="Escoga un producto ")
+        self.label1 = Label(self.ventana, text="Escoga un producto ", font = ("Times New Roman", 15))
         self.label1.place(x=10, y = 10)
+        # Title Label
+        self.Label2 = Label(self.ventana, 
+                            text = "Componentes necesarios",
+                            font = ("Times New Roman", 15), 
+                            background = 'gray', 
+                            foreground = "black").place(x = 10,
+                                                        y = 50)
 
         #Buttons
         self.btnProcesar = Button(self.ventana, text="Procesar", command=self.procesar)
         self.btnProcesar.place(x=400, y = 10)
+        self.btnReporte = Button(self.ventana, text = "Generar reporte de cola", command=self.generarReporteCola)
+        self.btnReporte.place(x = 500, y = 10)
+
+        #scrolledtext
+        # Creating scrolled text 
+        # area widget
+        self.text_area = scrolledtext.ScrolledText(self.ventana, 
+                                                wrap = tkinter.WORD, 
+                                                width = 30, 
+                                                height = 10, 
+                                                font = ("Times New Roman",
+                                                        15))
+        self.text_area.configure(state = 'disable')
+        self.text_area.place(x=10, y = 90)  
 
         self.ventana.mainloop()
 
     #Metodo para procesar individualmente cada producto y mostrarlo en la interfaz
     def procesar(self):
+        global simulacionActual
         nombreProducto = self.myComboBox.get()
+
         if nombreProducto != "":
-            realizar_Simulacion(nombreProducto)
+            listaProductosSimulacion = Lista_Doble()
+            simulacionActual = Simulacion("Simulacion_Individual", listaProductosSimulacion) # Reiniciar la simulacion Actual
+            realizar_Simulacion(nombreProducto) 
+            escribirArchivoXml()
+            self.text_area.configure(state = 'normal')
+            self.text_area.delete("1.0", tkinter.END) 
+            self.text_area.configure(state = 'disable')
+            self.mostrarComponenteNecesarios()
         else:
             print("El producto seleccionado no existe")
 
     def cargarMaquina(self):
         global listaProductos
         global listaLineasProduccion
-        global listaProductosSimulacion
         listaLineasProduccion = Lista_Doble()
         listaProductos = Lista_Doble()
-        listaProductosSimulacion = Lista_Doble()
         direccion = extraerDireccionArchivo()
         if direccion == None:
             pass
@@ -379,8 +599,6 @@ class VentanaMenu:
             
     def cargarSimulacion(self):
         global listaProductos
-        global listaProductosSimulacion
-        listaProductosSimulacion = Lista_Doble()
         if listaProductos.primero == None:
             print("No se ha cargado la maquina para hacer su simulación.")
         else:
@@ -390,9 +608,35 @@ class VentanaMenu:
             else:
                 print("Cargando Simulacion")
                 cargar_Simulacion(direccion)
+                generarReporteHtml()
+    
+    def reporte(self):
+        generarReporteHtml()
 
-    def prueba(self):
-        print("Hola")
+    #Metodo para llenar el text_area de componentes necesarios
+    def mostrarComponenteNecesarios(self):
+        global simulacionActual
+        self.text_area.configure(state = 'normal')
+        texto = ""
+        #Primer producto en la simulacion actual
+        actual = simulacionActual.listaProductos.primero
+        while(actual != None):
+            #Primera elemento de listaElaboracion de ese producto
+            actual2 = actual.listaElaboracion.primero
+            while(actual2 != None):
+                texto += f"Linea {actual2.linea} -> Componente {actual2.componente} \n"
+                actual2 = actual2.siguiente
+            actual = actual.siguiente
+        self.text_area.insert("1.0", texto)
+        self.text_area.configure(state = 'disable')
+
+    def generarReporteCola(self):
+        nombreProducto = self.myComboBox.get()
+
+        if nombreProducto != "":
+            generarReporteGraphviz(nombreProducto)
+        else:
+            print("El producto seleccionado no existe")
 
     #se manda a llamar cuando se selecciona un item del combo.
     def comboClick(self, event):

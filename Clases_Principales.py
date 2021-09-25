@@ -33,9 +33,11 @@ class Producto(NodoLista):
         super().__init__()
 
 class ProductoSimulacion(NodoLista):
-    def __init__(self, nombreSimulacion, producto):
-        self.nombreSimulacion = nombreSimulacion
-        self.producto = producto #simplemente un producto
+    def __init__(self, nombre, listaElaboracion, listaAccionesProducto):
+        self.nombre = nombre
+        #Este atributo es una lista de la clase Elaboracion
+        self.listaElaboracion = listaElaboracion #lista de Elaboracion(NodoLista)
+        self.listaAccionesProducto = listaAccionesProducto
         super().__init__()
 
 class Accion(NodoLista):
@@ -50,8 +52,7 @@ class Accion(NodoLista):
         return f"(linea = {str(self.linea)} ,mov = {str(self.mov)}, tmp_Accion = {str(self.tmp_Accion)})"
 
 class Simulacion(NodoLista):
-    def __init__(self, nombreSimulacion, nombreProducto,listaAcciones):
+    def __init__(self, nombreSimulacion = None, listaProductos = None):
         self.nombreSimulacion = nombreSimulacion
-        self.nombreProducto = nombreProducto
-        self.listaAcciones = listaAcciones
+        self.listaProductos = listaProductos
         super().__init__()
