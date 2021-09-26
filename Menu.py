@@ -711,14 +711,7 @@ class VentanaMenu:
                             foreground = "black")
         self.Label1Top.pack(side=TOP)
 
-        #Label Image
-        my_Image = ImageTk.PhotoImage(Image.open(f"{pathlib.Path(__file__).parent.absolute()}/perfil.jpg"))
-        self.my_LabelImg = Label(self.top, image = my_Image).pack(side=TOP)
-
-        
-        
         #Label explicacion app
-
         self.Label1Top = Label(self.top, 
                     text = "Acerca de",
                     font = ("Cambria", 15), 
@@ -732,7 +725,6 @@ class VentanaMenu:
                             background = 'SteelBlue1', 
                             foreground = "black")
         self.Label1Top.pack(side=TOP)
-
 
         #Button
         self.btn2 = Button(self.top, text = "Cerrar ventana ayuda", command=self.top.destroy).pack(side=BOTTOM)
