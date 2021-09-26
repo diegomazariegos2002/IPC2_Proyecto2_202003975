@@ -612,7 +612,6 @@ class VentanaMenu:
             listaProductosSimulacion = Lista_Doble()
             simulacionActual = Simulacion("Simulacion_Individual", listaProductosSimulacion) # Reiniciar la simulacion Actual
             realizar_Simulacion(nombreProducto) 
-            self.step()
             escribirArchivoXml()
             self.step()
             self.text_area.configure(state = 'normal')
@@ -622,6 +621,8 @@ class VentanaMenu:
             self.step()
             self.crearListaAcciones()
             self.Label4["text"] = f"Producto: {nombreProducto} - Tiempo de ensamblado: {str(simulacionActual.listaProductos.primero.listaAccionesProducto.ultimo.tmp_Accion)}"
+            self.step()
+            generarReporteHtml()
             self.step()
 
         else:
@@ -709,6 +710,11 @@ class VentanaMenu:
                             font = ("Comic Sans MS", 15), 
                             background = 'SteelBlue1', 
                             foreground = "black")
+        self.Label1Top.pack(side=TOP)
+
+        #Label Image
+        my_Image = ImageTk.PhotoImage(Image.open(f"{pathlib.Path(__file__).parent.absolute()}/perfil.jpg"))
+        self.Label1Top = Label(self.top, image=my_Image)
         self.Label1Top.pack(side=TOP)
 
         #Label explicacion app
