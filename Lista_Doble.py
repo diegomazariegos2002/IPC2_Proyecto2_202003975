@@ -19,6 +19,48 @@ class Lista_Doble:
             nuevo.anterior = actual
             self.ultimo = nuevo
     
+    #Metodo unico para guardar las acciones en su lista
+    def setNodoAccion(self, nuevo):
+        if self.primero == None:
+            self.primero = nuevo
+            self.ultimo = nuevo
+        else:
+            actual = self.primero
+            while actual != None:
+                
+                #si no estan en el mismo segundo que avance hasta encontrar su grupo de segundos
+                if int(nuevo.tmp_Accion) == int(actual.tmp_Accion):
+                    #si, si estan en el mismo grupo segundo entonces
+                    if int(nuevo.linea) < int(actual.linea): #si el nuevo es menor al actual
+                        nuevo.anterior = actual.anterior
+                        if actual != self.primero:
+                            actual.anterior.siguiente = nuevo
+                        actual.anterior = nuevo
+                        nuevo.siguiente = actual
+
+                        if actual == self.primero:
+                            self.primero = nuevo
+                            self.ultimo = actual
+
+                        return
+
+                if(actual.siguiente ==None):
+                    actual.siguiente = nuevo
+                    nuevo.anterior = actual
+                    self.ultimo = nuevo
+                    return
+
+                actual = actual.siguiente
+            
+
+
+    #Metodo para mostrar todas las acciones de una lista
+    def showAcciones(self):
+        actual = self.primero
+        while(actual != None):
+            print(f"linea = {actual.linea}, mov = {actual.mov}, tmp_Accion = {actual.tmp_Accion}")
+            actual = actual.siguiente
+
     def getLineaProduccion(self, num_Id):
         actual = self.primero
         while actual != None:

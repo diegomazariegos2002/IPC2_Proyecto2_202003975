@@ -1,44 +1,37 @@
-# Python program demonstrating
-# ScrolledText widget in tkinter
-  
-import tkinter as tk
+
 from tkinter import ttk
-from tkinter import scrolledtext
-  
-# Creating tkinter main window
-win = tk.Tk()
-win.title("ScrolledText Widget")
-  
-# Title Label
-ttk.Label(win, 
-          text = "ScrolledText Widget Example",
-          font = ("Times New Roman", 15), 
-          background = 'green', 
-          foreground = "white").grid(column = 0,
-                                     row = 0)
-  
-# Creating scrolled text 
-# area widget
-text_area = scrolledtext.ScrolledText(win, 
-                                      wrap = tk.WORD, 
-                                      width = 40, 
-                                      height = 10, 
-                                      font = ("Times New Roman",
-                                              15))
-  
-text_area.grid(column = 0, pady = 10, padx = 10)
+from tkinter import *
 
-texto = "HOla\n"
+root = Tk()
+root.geometry('500x500')
+
+my_tree = ttk.Treeview(root)
+
+#Define our columns
+my_tree['columns'] = ("Name", "ID", "Favorite Pizza")
 
 
-text_area.insert('1.0', texto)
-text_area.insert('1.0', texto)
-text_area.insert('1.0', texto)
-text_area.insert('1.0', texto)
-text_area.delete('1.0', tk.END)
-text_area.insert('1.0', "Todo")
+#Formate our columns
+my_tree.column('#0', width=120, minwidth=25)
+my_tree.column("Name", anchor=W, width=120)
+my_tree.column("ID", anchor = CENTER, width=80)
+my_tree.column("Favorite Pizza", anchor=W, width=120)
+
+# Create Headings
+my_tree.heading("#0", text="Label", anchor=W)
+my_tree.heading("Name", text="Name", anchor=W)
+my_tree.heading("ID", text="ID", anchor=CENTER)
+my_tree.heading("Favorite Pizza", text="Favorite Pizza", anchor=W)
+
+#Add Data
+data = ["John", 1, "Pepperoni"]
 
 
-# Placing cursor in the text area
-text_area.focus()
-win.mainloop()
+my_tree.insert(parent = '', index='end', iid=0, text = "1", values=("John", 1, "Peperroni"))
+
+
+#Pack to the screen
+my_tree.pack(pady=20)
+
+
+root.mainloop()

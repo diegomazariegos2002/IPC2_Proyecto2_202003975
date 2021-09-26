@@ -1,12 +1,12 @@
 #Libreria para interfaz grafica
 from tkinter import Button, Tk, Menu, filedialog, messagebox, ttk, Label, Scrollbar, scrolledtext, Frame
 import tkinter
-from tkinter.constants import TRUE
+from tkinter import *
+from tkinter import ttk
 #Libreria para la lectura del xml
 import xml.etree.ElementTree as ET
 #Libreria para expresion regular
 import re
-
 from graphviz.dot import Graph
 #Librerias del proyecto
 from Lista_Doble import Lista_Doble
@@ -16,6 +16,8 @@ import pathlib
 import webbrowser
 #Librería para utilizar la herramienta graphviz
 from graphviz import Digraph
+#Librería necesaria para trabajar con el progressBar
+import time
 
 #=======================================Variables globales========================================
 #Datos entrada
@@ -171,7 +173,6 @@ def realizar_Simulacion(Nombreproducto):
             break
         else:
             tiempoSimulacion += 1
-            print("Segundo:", tiempoSimulacion)
             actual = producto.listaElaboracion.primero
             while(actual != None):
                 #Si no existe una elaboracion antes de la actual entonces la elaboracion actual
@@ -309,8 +310,7 @@ def realizar_Simulacion(Nombreproducto):
 
                 #agregamos la accion resultante a la lista de acciones
                 if accion != None:
-                    print(str(accion))
-                    listaAccionesSimulacion.setNodo(accion)
+                    listaAccionesSimulacion.setNodoAccion(accion)
                 accion = None
 
                 actual = actual.siguiente
@@ -318,6 +318,7 @@ def realizar_Simulacion(Nombreproducto):
     
     producto.listaElaboracion.resetearEstadosNodoListaElaboracion() #Resetear los estados la lista de elaboraciones del producto porque todos estan TRUE al finalizar el metodo
     listaLineasProduccion.resetearEstadosNodoListaLineaProduccion() #Resetear los estados de las lineas de produccion
+    listaAccionesSimulacion.showAcciones()
     producto.listaAccionesProducto = listaAccionesSimulacion # Guardar la lista de acciones en la simulacion en las acciones de cada producto
     listaAccionesSimulacion = Lista_Doble() # Reiniciar la lista de acciones de Simulaciones general para poder realizar otras simulaciones a futuro.
     
@@ -501,7 +502,7 @@ class VentanaMenu:
         self.ventana = Tk()
         self.ventana.title("Menu")
         #Posicionar ventana en el centro
-        self.ancho_ventana = 800
+        self.ancho_ventana = 1300
         self.alto_ventana = 500
 
         self.x_ventana = self.ventana.winfo_screenwidth() // 2 - self.ancho_ventana // 2
@@ -510,7 +511,7 @@ class VentanaMenu:
         self.posicion = str(self.ancho_ventana) + "x" + str(self.alto_ventana) + "+" + str(self.x_ventana) + "+" + str(self.y_ventana)
         self.ventana.geometry(self.posicion)
 
-        self.ventana.configure(bg = 'turquoise')
+        self.ventana.configure(bg = 'sky blue')
         self.ventana.resizable(False, False)
 
         # Por medio de esto accedo a lo que sucede al dar click sobre la X para cerrar la ventana
@@ -524,7 +525,7 @@ class VentanaMenu:
         self.miMenu.add_command(label="Cargar maquina", command=self.cargarMaquina)
         self.miMenu.add_command(label="Cargar simulación", command=self.cargarSimulacion)
         self.miMenu.add_command(label="Reportes", command=self.reporte)
-        self.miMenu.add_command(label="Salir", command=self.on_closing)
+        self.miMenu.add_command(label="Ayuda", command=self.infoEstudiante)
 
         #ComboBox
         listadoNombreImagenes = []
@@ -542,6 +543,20 @@ class VentanaMenu:
                             background = 'gray', 
                             foreground = "black").place(x = 10,
                                                         y = 50)
+        # Table Label
+        self.Label3 = Label(self.ventana, 
+                            text = "Tabla de resultados simulacion",
+                            font = ("Times New Roman", 15), 
+                            background = 'gray', 
+                            foreground = "black").place(x = 400,
+                                                        y = 50)
+        # Time Label
+        self.Label4 = Label(self.ventana, 
+                            text = "Tiempo de ensamblado: ",
+                            font = ("Times New Roman", 15), 
+                            background = 'SteelBlue1', 
+                            foreground = "black")
+        self.Label4.place(x = 400,y = 400)
 
         #Buttons
         self.btnProcesar = Button(self.ventana, text="Procesar", command=self.procesar)
@@ -555,28 +570,58 @@ class VentanaMenu:
         self.text_area = scrolledtext.ScrolledText(self.ventana, 
                                                 wrap = tkinter.WORD, 
                                                 width = 30, 
-                                                height = 10, 
+                                                height = 13, 
                                                 font = ("Times New Roman",
                                                         15))
         self.text_area.configure(state = 'disable')
-        self.text_area.place(x=10, y = 90)  
+        self.text_area.place(x=10, y = 90) 
+
+        #Frame
+        self.wrapper1 = Frame(self.ventana)
+        self.wrapper1.place(x = 400, y = 90, width=890, height=300)
+        
+        #TreeView o tabla dentro del Frame wrapper1
+        self.trv = ttk.Treeview()
+        self.yScrollball = ttk.Scrollbar()
+        self.xScrollball = ttk.Scrollbar()
+
+        #ProgressBar
+        self.my_ProgressBar = ttk.Progressbar(self.ventana, orient=HORIZONTAL, length=1200, mode='determinate')
+        self.my_ProgressBar.pack(side=BOTTOM, pady = 20)
 
         self.ventana.mainloop()
+
+    #Metodos para el ProgressBarr
+    def step(self):
+        self.my_ProgressBar['value'] += 25
+        self.ventana.update()
+        time.sleep(1)
+    def stop(self):
+        self.my_ProgressBar.stop()
 
     #Metodo para procesar individualmente cada producto y mostrarlo en la interfaz
     def procesar(self):
         global simulacionActual
+        self.stop()#Reiniciar barra de progreso
+
         nombreProducto = self.myComboBox.get()
 
         if nombreProducto != "":
             listaProductosSimulacion = Lista_Doble()
             simulacionActual = Simulacion("Simulacion_Individual", listaProductosSimulacion) # Reiniciar la simulacion Actual
             realizar_Simulacion(nombreProducto) 
+            self.step()
             escribirArchivoXml()
+            self.step()
             self.text_area.configure(state = 'normal')
             self.text_area.delete("1.0", tkinter.END) 
             self.text_area.configure(state = 'disable')
             self.mostrarComponenteNecesarios()
+            self.step()
+            self.crearListaAcciones()
+            self.Label4["text"] = f"Producto: {nombreProducto} - Tiempo de ensamblado: {str(simulacionActual.listaProductos.primero.listaAccionesProducto.ultimo.tmp_Accion)}"
+            self.step()
+
         else:
             print("El producto seleccionado no existe")
 
@@ -613,6 +658,96 @@ class VentanaMenu:
     def reporte(self):
         generarReporteHtml()
 
+    def infoEstudiante(self):
+        messagebox.showinfo(message="Diego André Mazariegos Barrientos", title="Ayuda")
+
+    #Metodo para crear una lista dentro del Frame "wrapper1" and show a list of actions.
+    def crearListaAcciones(self):
+        global simulacionActual
+        productoSimulado = simulacionActual.listaProductos.primero
+        #Uso el destroy para reiniciar la tabla si es que estuviese alguna de un producto simulado anteriormente
+        self.trv.destroy()
+        self.yScrollball.destroy()
+        self.xScrollball.destroy()
+        
+        #Creando lista para las columnas OJO aquí se crea una lista porque este widget solo acepta listas
+        #tanto para declarar sus columnas como para declarar sus values en cada arrow.
+        columns = []
+        columns.append("segundo")
+        primerSegundo = 1
+        actual = productoSimulado.listaAccionesProducto.primero
+        while primerSegundo == 1:
+            primerSegundo = int(actual.tmp_Accion)
+            if primerSegundo != 1:
+                break
+            columns.append(str(actual.linea))
+            actual = actual.siguiente
+
+        #Creando el objeto Treevie o tabla con sus respectivas columnas y propiedades
+        self.trv = ttk.Treeview(self.wrapper1, columns=columns,show="headings", height="6")
+        self.trv.place(x = 0, y = 0, width=890, height=300)
+        
+        #Esta parte es basicamente esto -> trv.column( "1", anchor=CENTER)
+        primerSegundo = 1
+        actual = productoSimulado.listaAccionesProducto.primero
+        self.trv.column("segundo", anchor=CENTER) #Esta linea corresponde unicamente para la columna de los segundos
+        while primerSegundo == 1:
+            primerSegundo = int(actual.tmp_Accion)
+            if primerSegundo != 1:
+                break
+            self.trv.column( str(actual.linea), anchor=CENTER)
+            actual = actual.siguiente
+        
+        #Esta parte es basicamente esto -> trv.heading("1", text="Customer ID1")
+        #Header's of our table
+        primerSegundo = 1
+        actual = productoSimulado.listaAccionesProducto.primero
+        self.trv.heading("segundo", text="Segundos")
+        while primerSegundo == 1:
+            primerSegundo = int(actual.tmp_Accion)
+            if primerSegundo != 1:
+                break
+            self.trv.heading(str(actual.linea), text=f"Linea {str(actual.linea)}")
+            actual = actual.siguiente
+
+        #Part llenado of data -> trv.insert('', 'end', values = (1,2,3))
+        #Recordar que se inserta por filas
+        #here we need to make a list because the values only admitt list's in the moment of instert the arrows
+        values = []
+        segundoActual = 1
+        segundoSiguiente = 1
+        actual = productoSimulado.listaAccionesProducto.primero
+        while actual != None:
+            values = []
+            insertar = False
+            while actual != None:
+                segundoActual = int(actual.tmp_Accion)
+                if (segundoActual == segundoSiguiente) and (insertar == False):
+                    segundoSiguiente += 1
+                    values.append(str(actual.tmp_Accion))
+                    insertar = True
+                if segundoActual == segundoSiguiente:
+                    insertar = False
+                    break
+                values.append(str(actual.mov))
+                actual = actual.siguiente
+            #make arrow
+            self.trv.insert('', 'end', values = values)
+        
+
+
+        #Part of Scrollbar's
+        #Vertical Scrollbar
+        self.yScrollball = ttk.Scrollbar(self.wrapper1, orient = "vertical", command=self.trv.yview)
+        self.yScrollball.pack(side=RIGHT, fill=Y)
+
+        #Horizontal Scrollbar
+        self.xScrollball = ttk.Scrollbar(self.wrapper1, orient = "horizontal", command=self.trv.xview)
+        self.xScrollball.pack(side=BOTTOM, fill=X)
+
+        #agregar los scroll a la configuarcion de la tabla
+        self.trv.configure(yscrollcommand=self.yScrollball.set, xscrollcommand=self.xScrollball.set)
+        
     #Metodo para llenar el text_area de componentes necesarios
     def mostrarComponenteNecesarios(self):
         global simulacionActual
