@@ -1,18 +1,7 @@
 import tkinter as tk
+from tkinter import font
 
-class Test():
-    def __init__(self):
-        self.root = tk.Tk()
-        self.label = tk.Label(self.root, text="Text")
 
-        self.button = tk.Button(self.root,
-                                text="Click to change text below",
-                                command=self.changeText)
-        self.button.pack()
-        self.label.pack()
-        self.root.mainloop()
-
-    def changeText(self):
-        self.label.configure(text="Text Updated")        
-
-app=Test()
+root = tk.Tk()
+for font in font.families():
+    print(font)

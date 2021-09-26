@@ -18,6 +18,8 @@ import webbrowser
 from graphviz import Digraph
 #Librería necesaria para trabajar con el progressBar
 import time
+#Librería para extraer imagenes
+from PIL import ImageTk, Image
 
 #=======================================Variables globales========================================
 #Datos entrada
@@ -500,7 +502,7 @@ class VentanaMenu:
     def __init__(self):
         self.txt = None
         self.ventana = Tk()
-        self.ventana.title("Menu")
+        self.ventana.title("Menu Principal")
         #Posicionar ventana en el centro
         self.ancho_ventana = 1300
         self.alto_ventana = 500
@@ -624,6 +626,7 @@ class VentanaMenu:
 
         else:
             print("El producto seleccionado no existe")
+            messagebox.showwarning('ADVERTENCIA', 'El producto seleccionado no existe.')
 
     def cargarMaquina(self):
         global listaProductos
@@ -632,7 +635,7 @@ class VentanaMenu:
         listaProductos = Lista_Doble()
         direccion = extraerDireccionArchivo()
         if direccion == None:
-            pass
+            messagebox.showwarning('ADVERTENCIA', 'No se ha seleccionado ningun archivo.')
         else:
             print("Cargando Maquina")
             cargar_Maquina(direccion)
@@ -646,6 +649,7 @@ class VentanaMenu:
         global listaProductos
         if listaProductos.primero == None:
             print("No se ha cargado la maquina para hacer su simulación.")
+            messagebox.showwarning('ADVERTENCIA', 'No se ha cargado la maquina para hacer su simulación.')
         else:
             direccion = extraerDireccionArchivo()
             if direccion == None:
@@ -659,7 +663,79 @@ class VentanaMenu:
         generarReporteHtml()
 
     def infoEstudiante(self):
-        messagebox.showinfo(message="Diego André Mazariegos Barrientos", title="Ayuda")
+        global my_Image
+        self.top = Toplevel()
+        self.top.title("Ayuda")
+        #Posicionar ventana en el centro
+        self.ancho_ventana = 600
+        self.alto_ventana = 500
+
+        self.x_ventana = self.top.winfo_screenwidth() // 2 - self.ancho_ventana // 2
+        self.y_ventana = self.top.winfo_screenheight() // 2 - self.alto_ventana // 2
+
+        self.posicion = str(self.ancho_ventana) + "x" + str(self.alto_ventana) + "+" + str(self.x_ventana) + "+" + str(self.y_ventana)
+        self.top.geometry(self.posicion)
+
+        self.top.configure(bg = 'sky blue')
+        self.top.resizable(False, False)
+
+        #Label
+        self.Label1Top = Label(self.top, 
+                            text = "DIEGO ANDRÉ MAZARIEGOS BARRIENTOS",
+                            font = ("Comic Sans MS", 15), 
+                            background = 'SteelBlue1', 
+                            foreground = "black")
+        self.Label1Top.pack(side=TOP)
+        self.Label1Top = Label(self.top, 
+                            text = "202003975",
+                            font = ("Comic Sans MS", 15), 
+                            background = 'SteelBlue1', 
+                            foreground = "black")
+        self.Label1Top.pack(side=TOP)
+        self.Label1Top = Label(self.top, 
+                            text = "Introducción a la programación y computación 2 sección 'D'",
+                            font = ("Comic Sans MS", 15), 
+                            background = 'SteelBlue1', 
+                            foreground = "black")
+        self.Label1Top.pack(side=TOP)
+        self.Label1Top = Label(self.top, 
+                            text = "Ingenieria en Ciencias y Sistemas",
+                            font = ("Comic Sans MS", 15), 
+                            background = 'SteelBlue1', 
+                            foreground = "black")
+        self.Label1Top.pack(side=TOP)
+        self.Label1Top = Label(self.top, 
+                            text = "4to Semestre",
+                            font = ("Comic Sans MS", 15), 
+                            background = 'SteelBlue1', 
+                            foreground = "black")
+        self.Label1Top.pack(side=TOP)
+
+        #Label Image
+        my_Image = ImageTk.PhotoImage(Image.open(f"{pathlib.Path(__file__).parent.absolute()}/perfil.jpg"))
+        self.my_LabelImg = Label(self.top, image = my_Image).pack(side=TOP)
+
+        
+        
+        #Label explicacion app
+
+        self.Label1Top = Label(self.top, 
+                    text = "Acerca de",
+                    font = ("Cambria", 15), 
+                    background = 'SteelBlue1', 
+                    foreground = "black")
+        self.Label1Top.pack(side=TOP)
+
+        self.Label1Top = Label(self.top, 
+                            text = '''El software denominado 'Proyecto 2' fue desarrollado para la empresa \n Digital Intelligence, S. A. en busca de simular el funcionamiento de una \nmaquina de ensamblaje en la fabrica  con “n” líneas de ensamblaje y cada línea de ensamblaje con “m” posibles \ncomponentes a seleccionar de forma que pueda predecir el tiempo “óptimo” para elaborar \ncualquier producto que pueda ser ensamblado en la máquina. ''',
+                            font = ("Cambria", 9), 
+                            background = 'SteelBlue1', 
+                            foreground = "black")
+        self.Label1Top.pack(side=TOP)
+
+
+        #Button
+        self.btn2 = Button(self.top, text = "Cerrar ventana ayuda", command=self.top.destroy).pack(side=BOTTOM)
 
     #Metodo para crear una lista dentro del Frame "wrapper1" and show a list of actions.
     def crearListaAcciones(self):
@@ -772,6 +848,7 @@ class VentanaMenu:
             generarReporteGraphviz(nombreProducto)
         else:
             print("El producto seleccionado no existe")
+            messagebox.showwarning('ADVERTENCIA', 'El producto seleccionado no existe.')
 
     #se manda a llamar cuando se selecciona un item del combo.
     def comboClick(self, event):
